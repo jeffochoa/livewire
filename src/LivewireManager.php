@@ -3,6 +3,8 @@
 namespace Livewire;
 
 use Illuminate\Support\Str;
+use Livewire\Testing\Contracts\HttpRequestsWrapper;
+use Livewire\Testing\MakesHttpRequestsWrapper;
 use Livewire\Testing\TestableLivewire;
 use Illuminate\Contracts\Auth\Authenticatable;
 use Livewire\Exceptions\ComponentNotFoundException;
@@ -92,9 +94,15 @@ class LivewireManager
         return "<{$tagName} wire:id=\"{$id}\"></{$tagName}>";
     }
 
-    public function test($name, $params = [])
+    public function test($name, $params = [], ?HttpRequestsWrapper $wrapper = null)
     {
-        return new TestableLivewire($name, $params);
+        if ($wrapper) {
+            return new TestableLivewire($wrapper, $name, $params);
+        }
+
+        $wrapper = (new MakesHttpRequestsWrapper(app()))->withoutMiddleware();
+
+        return new TestableLivewire($wrapper, $name, $params);
     }
 
     public function visit($browser, $class, $queryString = '')

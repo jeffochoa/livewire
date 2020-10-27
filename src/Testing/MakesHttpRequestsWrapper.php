@@ -4,11 +4,12 @@ namespace Livewire\Testing;
 
 use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Auth\Access\AuthorizationException;
+use Livewire\Testing\Contracts\HttpRequestsWrapper;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Illuminate\Foundation\Testing\Concerns\MakesHttpRequests;
 use Illuminate\Foundation\Testing\Concerns\InteractsWithExceptionHandling;
 
-class MakesHttpRequestsWrapper
+class MakesHttpRequestsWrapper implements HttpRequestsWrapper
 {
     use MakesHttpRequests, InteractsWithExceptionHandling;
 
@@ -24,7 +25,7 @@ class MakesHttpRequestsWrapper
         $cachedHandler = app(ExceptionHandler::class);
         $cachedShouldSkipMiddleware = $this->app->shouldSkipMiddleware();
 
-        $this->withoutExceptionHandling([HttpException::class, AuthorizationException::class])->withoutMiddleware();
+        $this->withoutExceptionHandling([HttpException::class, AuthorizationException::class]);
 
         $callback($this);
 

@@ -2,6 +2,7 @@
 
 namespace Livewire\Testing;
 
+use Livewire\Testing\Contracts\HttpRequestsWrapper;
 use Mockery;
 use Livewire\Livewire;
 use Illuminate\Support\Str;
@@ -16,6 +17,7 @@ use Livewire\Exceptions\PropertyNotFoundException;
 class TestableLivewire
 {
     protected static $instancesById = [];
+    protected $laravelTestingWrapper;
 
     public $payload = [];
     public $componentName;
@@ -32,8 +34,10 @@ class TestableLivewire
         Concerns\MakesCallsToComponent,
         Concerns\HasFunLittleUtilities;
 
-    public function __construct($name, $params = [])
+    public function __construct(HttpRequestsWrapper $laravelTestingWrapper, $name, $params = [])
     {
+        $this->laravelTestingWrapper = $laravelTestingWrapper;
+
         Livewire::listen('view:render', function ($view) {
             $this->lastRenderedView = $view;
         });
@@ -131,7 +135,7 @@ class TestableLivewire
             ]);
         });
 
-        $laravelTestingWrapper = new MakesHttpRequestsWrapper(app());
+        $laravelTestingWrapper = $this->laravelTestingWrapper;
 
         $response = null;
 
@@ -176,7 +180,7 @@ class TestableLivewire
 
     public function callEndpoint($method, $url, $payload)
     {
-        $laravelTestingWrapper = new MakesHttpRequestsWrapper(app());
+        $laravelTestingWrapper = $this->laravelTestingWrapper;
 
         $response = null;
 

@@ -2,10 +2,13 @@
 
 namespace Tests\Unit;
 
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
 use Livewire\Component;
 use Livewire\Livewire;
 use Livewire\LivewireManager;
 use Illuminate\Support\Facades\Route;
+use Livewire\Testing\MakesHttpRequestsWrapper;
 
 class LivewireTestingTest extends TestCase
 {
@@ -185,6 +188,28 @@ class LivewireTestingTest extends TestCase
             ->set('bar', '')
             ->assertHasErrors(['foo', 'bar']);
     }
+
+    /** @test */
+    public function can_use_a_custom_instance_of_an_http_requests_wrapper(): void
+    {
+        app()->get(\Illuminate\Contracts\Http\Kernel::class)->pushMiddleware(CustomWrapperMiddleware::class);
+
+        $testingWrapper = new MakesHttpRequestsWrapper(app());
+
+        $testingWrapper = $testingWrapper->withMiddleware(CustomWrapperMiddleware::class);
+
+        Cache::shouldReceive('put')->once()->with('foo', 'var')->andReturn(true);
+
+        app(LivewireManager::class)
+            ->test(HasMountArguments::class, ['name' => 'foo'], $testingWrapper);
+    }
+}
+
+class CustomWrapperMiddleware {
+    public function handle($request, $next) {
+
+        return $next($request);
+    }
 }
 
 class HasMountArguments extends Component
@@ -193,6 +218,7 @@ class HasMountArguments extends Component
 
     public function mount($name)
     {
+        Cache::put('foo', 'var');
         $this->name = $name;
     }
 
